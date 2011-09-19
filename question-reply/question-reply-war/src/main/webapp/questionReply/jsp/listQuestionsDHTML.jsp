@@ -66,12 +66,18 @@ $(document).ready(function() {
           $('#a'+id).show();
           etat[id] = "open";
           var found = $('#a'+id + '>ul>li');
-          if (found.length == 0) {  
-            $.getJSON(answersUrl,function(data) {
-              $('#a'+id + ' > ul').html('');
-              $.each(data, function(key, answer) {
-                $('#a'+ id + ' > ul').append(displayAnswer(answer));
-              });
+          if (found.length == 0) {
+            $.ajax({
+              type: "GET",
+              url: answersUrl,
+              dataType: "json",
+              cache: false,
+              success: function(data) {
+                $('#a'+id + ' > ul').html('');
+                $.each(data, function(key, answer) {
+                  $('#a'+ id + ' > ul').append(displayAnswer(answer));
+                });
+              }
             });
           }
         } else {
@@ -95,16 +101,22 @@ $(document).ready(function() {
           etat[index] = 'close';
         });
         var found = $('#qc'+id + '>li');
-        if (found.length == 0) {  
-          $.getJSON(questionUrl,function(data) {
-            $('#qc'+id).html('');
-            $.each(data, function(key, question) {
-              answersDiv = $('<div>').addClass('answers').attr('id', 'a' + question.id)
-              answersDiv.append($('<p>').text(question.content));
-              answersDiv.append($('<ul>'));
-              answersDiv.hide();            
-              $('#qc'+id).append($('<li>').append(displayQuestion(question)).append(answersDiv));
-            });
+        if (found.length == 0) { 
+          $.ajax({
+            type: "GET",
+            url: questionUrl,
+            dataType: "json",
+            cache: false,
+            success: function(data) {
+              $('#qc'+id).html('');
+              $.each(data, function(key, question) {
+                answersDiv = $('<div>').addClass('answers').attr('id', 'a' + question.id)
+                answersDiv.append($('<p>').text(question.content));
+                answersDiv.append($('<ul>'));
+                answersDiv.hide();            
+                $('#qc'+id).append($('<li>').append(displayQuestion(question)).append(answersDiv));
+              });
+            }
           });
         }
         $('#qc'+id).show();        	   
