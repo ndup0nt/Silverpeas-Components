@@ -9,7 +9,7 @@
   
   <groupId>com.silverpeas.components</groupId>
   <artifactId>whitepages</artifactId>
-  <version>5.9.3.1-oosphere-SNAPSHOT</version>
+  <version>5.9.3.1-oosphere</version>
   <packaging>pom</packaging>
   <name>whitepages Component</name>
   <modules>
@@ -17,20 +17,5 @@
     <module>whitepages-war</module>
     <module>whitepages-config</module>
   </modules>
-
-    <distributionManagement>
-        <repository>
-            <id>oosphere-releases</id>
-            <name>Repository OOsphere</name>
-            <layout>default</layout>
-            <url>http://sd-23402.dedibox.fr:8081/nexus/content/repositories/releases/</url>
-        </repository>
-        <snapshotRepository>
-            <id>oosphere-snapshots</id>
-            <name>Snapshots Repository OOsphere</name>
-            <layout>default</layout>
-            <url>http://sd-23402.dedibox.fr:8081/nexus/content/repositories/snapshots/</url>
-        </snapshotRepository>
-    </distributionManagement>
 
 </project>
