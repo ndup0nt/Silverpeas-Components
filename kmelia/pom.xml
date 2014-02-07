@@ -4,13 +4,34 @@
   <parent>
     <groupId>com.silverpeas</groupId>
     <artifactId>components</artifactId>
-    <version>5.13.4-SNAPSHOT</version>
+    <version>5.13.3</version>
   </parent>
-  
+
+  <repositories>
+    <repository>
+      <id>Silverpeas</id>
+      <layout>default</layout>
+        <name>Silverpeas Repository</name>
+        <url>http://www.silverpeas.org/nexus/content/groups/silverpeas</url>
+        <releases>
+            <enabled>true</enabled>
+        </releases>
+        <snapshots>
+            <enabled>true</enabled>
+        </snapshots>
+    </repository>
+  </repositories>
+
+
+  <properties>
+    <core.version>5.13.3</core.version>
+  </properties>
+
   <groupId>com.silverpeas.components</groupId>
   <artifactId>kmelia</artifactId>
   <packaging>pom</packaging>
   <name>kmelia Component</name>
+  <version>5.13.3-aim-SNAPSHOT</version>
   <modules>
     <module>kmelia-ejb</module>
     <module>kmelia-war</module>
