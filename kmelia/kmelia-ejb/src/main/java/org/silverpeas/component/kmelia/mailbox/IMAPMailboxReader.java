@@ -25,7 +25,9 @@ import com.stratelia.webactiv.util.ResourceLocator;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Singleton;
 import javax.mail.*;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -35,6 +37,7 @@ import java.util.Properties;
  * Note : IMAPS is not supported yet.
  */
 @Named
+@Singleton
 public class IMAPMailboxReader implements MailboxReader {
     private static final String IMAP_PROTOCOL = "imap";
     private static final String IMAP_SERVER_PROP = "kmelia.mailbox.imapServerAddress";
@@ -101,14 +104,14 @@ public class IMAPMailboxReader implements MailboxReader {
     }
 
     @Override
-    public void readMailbox() throws MessagingException {
+    public void readMailbox() throws MessagingException, IOException {
         if (listeners.size() == 0) {
             return;
         }
         doReadMailbox();
     }
 
-    private void doReadMailbox() throws MessagingException {
+    private void doReadMailbox() throws MessagingException, IOException {
         Store mailAccount = mailSession.getStore(IMAP_PROTOCOL);
         mailAccount.connect(imapServerAddress, imapServerPort, login, password);
 
@@ -123,7 +126,7 @@ public class IMAPMailboxReader implements MailboxReader {
         }
     }
 
-    private void handleMessages(Store mailAccount) throws MessagingException {
+    private void handleMessages(Store mailAccount) throws MessagingException, IOException {
         Folder inbox = mailAccount.getFolder(srcMessagesFolder);
         Folder handledFolder = mailAccount.getFolder(handledMessagesFolder);
 
@@ -145,7 +148,7 @@ public class IMAPMailboxReader implements MailboxReader {
         }
     }
 
-    private void handleMessagesInOpenedFolders(Folder inbox, Folder handledFolder) throws MessagingException {
+    private void handleMessagesInOpenedFolders(Folder inbox, Folder handledFolder) throws MessagingException, IOException {
         // Get the messages and process them
         Message[] msgs = inbox.getMessages();
 

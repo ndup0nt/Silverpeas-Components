@@ -23,21 +23,28 @@ package org.silverpeas.component.kmelia.mailbox;
 import com.silverpeas.scheduler.*;
 import com.silverpeas.scheduler.trigger.JobTrigger;
 import com.silverpeas.scheduler.trigger.TimeUnit;
+import com.silverpeas.util.FileUtil;
 import com.stratelia.silverpeas.silvertrace.SilverTrace;
 import com.stratelia.webactiv.util.ResourceLocator;
+import org.apache.commons.io.IOUtils;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Singleton;
 import javax.mail.Message;
 import javax.mail.MessagingException;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringWriter;
 
 /**
  * A SchedulerEventListener that fires mailbox reading using MailboxReader.
  * This Listener can register itself with the registerJob method.
  */
 @Named
+@Singleton
 public class MailboxReaderJob implements SchedulerEventListener {
     private static final String JOB_NAME = "mailboxReaderJob";
     private static final String FREQUENCY_PROP = "kmelia.mailbox.job.frequency";
@@ -45,6 +52,7 @@ public class MailboxReaderJob implements SchedulerEventListener {
 
     private final MailboxReader mailboxReader;
     private final int frequencyInMinutes;
+    private final MessageProcessor messageProcessor;
 
 
     /**
@@ -54,9 +62,10 @@ public class MailboxReaderJob implements SchedulerEventListener {
      * @param kmeliaSettings   kmelia settings
      */
     @Inject
-    public MailboxReaderJob(MailboxReader theMailboxReader, ResourceLocator kmeliaSettings) {
+    public MailboxReaderJob(MailboxReader theMailboxReader, ResourceLocator kmeliaSettings, MessageProcessor theMessageProcessor) {
         this.mailboxReader = theMailboxReader;
         this.frequencyInMinutes = kmeliaSettings.getInteger(FREQUENCY_PROP, DEFAULT_FREQUENCY);
+        this.messageProcessor = theMessageProcessor;
     }
 
     @Override
@@ -84,13 +93,17 @@ public class MailboxReaderJob implements SchedulerEventListener {
     public void registerJob() throws SchedulerException {
         mailboxReader.registerListener(new MessageListener() {
             @Override
-            public void onMailboxRead(ReadMailboxEvent event) throws MessagingException {
+            public void onMailboxRead(ReadMailboxEvent event) throws MessagingException, IOException {
                 for (Message msg : event.getMessages()) {
-                    System.out.println("Message subject : " + msg.getSubject());
-                    try {
-                        System.out.println("Message content : " + new MultipartMessageProcessor().getBodyText(msg));
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                        MessageDocument doc = messageProcessor.processMessage(msg);
+                        System.out.println("Message subject : " + doc.getTitle());
+                        System.out.println("Message content : " + doc.getBody());
+                    System.out.println("Message attachments count : "+doc.getAttachments().size());
+                    for(Attachment att : doc.getAttachments()){
+                        StringWriter writer = new StringWriter();
+                        IOUtils.copy(att.getInputStream(), writer);
+                        System.out.println(att.getFileName() + " : ");
+                        System.out.println(writer.toString());
                     }
                 }
             }

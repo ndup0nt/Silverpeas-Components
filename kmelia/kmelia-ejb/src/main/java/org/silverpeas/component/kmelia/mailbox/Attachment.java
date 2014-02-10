@@ -20,24 +20,38 @@
  */
 package org.silverpeas.component.kmelia.mailbox;
 
-
-import javax.mail.MessagingException;
-import java.io.IOException;
+import java.io.InputStream;
 
 /**
- * Read messages in a mailbox and handle them with the registered listeners.
+ * Model object for an email attachment.
  */
-public interface MailboxReader {
-    /**
-     * Register a new MessageListener.
-     */
-    void registerListener(MessageListener listener);
+public class Attachment {
 
-    /**
-     * Read messages in a mailbox and handle them with the registered listeners.
-     *
-     * @throws javax.mail.MessagingException if an error occured while communicating with the messaging system
-     * @throws java.io.IOException if an error occured while reading a message content
-     */
-    void readMailbox() throws MessagingException, IOException;
+    private long size;
+    private String fileName;
+    private String contentType;
+    private InputStream inputStream;
+
+    public Attachment(long size, String fileName, String contentType, InputStream inputStream) {
+        this.size = size;
+        this.fileName = fileName;
+        this.contentType = contentType;
+        this.inputStream = inputStream;
+    }
+
+    public long getSize() {
+        return size;
+    }
+
+    public String getFileName() {
+        return fileName;
+    }
+
+    public String getContentType() {
+        return contentType;
+    }
+
+    public InputStream getInputStream() {
+        return inputStream;
+    }
 }
