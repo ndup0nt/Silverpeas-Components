@@ -20,6 +20,11 @@
  */
 package org.silverpeas.component.kmelia.mailbox;
 
+import com.silverpeas.util.AssertArgument;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
@@ -29,35 +34,32 @@ import java.util.Set;
  */
 public class MessageDocument {
 
-    private Set<Attachment> attachments = new HashSet<Attachment>();
-    private String title;
-    private String sender;
-    private Date sentDate;
+    private final Set<Attachment> attachments = new HashSet<Attachment>();
+    @Getter
+    private final String subject;
+    @Getter
+    private final String sender;
+    private final Date sentDate;
+    @Getter
+    @Setter
     private String body;
+    @Getter
+    @Setter
     private String bodyContentType;
 
+    public MessageDocument(String theSubject, String theSender, Date theSentDate) {
+        this.subject = theSubject;
+        this.sender = theSender;
+        AssertArgument.assertNotNull(theSentDate, "sentDate is mandatory");
+        this.sentDate = (Date) theSentDate.clone();
+    }
+
     public Set<Attachment> getAttachments() {
-        return attachments;
+        return Collections.unmodifiableSet(attachments);
     }
 
     public void addAttachment(Attachment anAttachment) {
         this.attachments.add(anAttachment);
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public String getSender() {
-        return sender;
-    }
-
-    public void setSender(String sender) {
-        this.sender = sender;
     }
 
     public Date getSentDate() {
@@ -65,27 +67,5 @@ public class MessageDocument {
             return null;
         }
         return new Date(sentDate.getTime());
-    }
-
-    public void setSentDate(Date date) {
-        if (date != null) {
-            this.sentDate = new Date(date.getTime());
-        }
-    }
-
-    public String getBody() {
-        return body;
-    }
-
-    public void setBody(String body) {
-        this.body = body;
-    }
-
-    public String getBodyContentType() {
-        return bodyContentType;
-    }
-
-    public void setBodyContentType(String bodyContentType) {
-        this.bodyContentType = bodyContentType;
     }
 }

@@ -23,7 +23,6 @@ package org.silverpeas.component.kmelia.mailbox;
 import com.silverpeas.scheduler.*;
 import com.silverpeas.scheduler.trigger.JobTrigger;
 import com.silverpeas.scheduler.trigger.TimeUnit;
-import com.silverpeas.util.FileUtil;
 import com.stratelia.silverpeas.silvertrace.SilverTrace;
 import com.stratelia.webactiv.util.ResourceLocator;
 import org.apache.commons.io.IOUtils;
@@ -34,9 +33,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.mail.Message;
 import javax.mail.MessagingException;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.StringWriter;
 
 /**
@@ -96,7 +93,7 @@ public class MailboxReaderJob implements SchedulerEventListener {
             public void onMailboxRead(ReadMailboxEvent event) throws MessagingException, IOException {
                 for (Message msg : event.getMessages()) {
                         MessageDocument doc = messageProcessor.processMessage(msg);
-                        System.out.println("Message subject : " + doc.getTitle());
+                        System.out.println("Message subject : " + doc.getSubject());
                         System.out.println("Message content : " + doc.getBody());
                     System.out.println("Message attachments count : "+doc.getAttachments().size());
                     for(Attachment att : doc.getAttachments()){

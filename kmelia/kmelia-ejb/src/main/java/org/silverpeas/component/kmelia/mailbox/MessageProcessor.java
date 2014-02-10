@@ -95,10 +95,7 @@ public class MessageProcessor {
      */
     public MessageDocument processMessage(Message mail) throws MessagingException, IOException {
         String sender = ((InternetAddress[]) mail.getFrom())[0].getAddress();
-        MessageDocument messageDocument = new MessageDocument();
-        messageDocument.setSender(sender);
-        messageDocument.setSentDate(mail.getSentDate());
-        messageDocument.setTitle(mail.getSubject());
+        MessageDocument messageDocument = new MessageDocument(mail.getSubject(), sender, mail.getSentDate());
         SilverTrace.info("kmelia", this.getClass().getName() + ".processMessage()",
                 "Processing message " + mail.getSubject());
         processMailPart(mail, messageDocument);

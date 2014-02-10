@@ -20,38 +20,20 @@
  */
 package org.silverpeas.component.kmelia.mailbox;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
 import java.io.InputStream;
 
 /**
  * Model object for an email attachment.
  */
+@Getter
+@RequiredArgsConstructor
 public class Attachment {
 
-    private long size;
-    private String fileName;
-    private String contentType;
-    private InputStream inputStream;
-
-    public Attachment(long size, String fileName, String contentType, InputStream inputStream) {
-        this.size = size;
-        this.fileName = fileName;
-        this.contentType = contentType;
-        this.inputStream = inputStream;
-    }
-
-    public long getSize() {
-        return size;
-    }
-
-    public String getFileName() {
-        return fileName;
-    }
-
-    public String getContentType() {
-        return contentType;
-    }
-
-    public InputStream getInputStream() {
-        return inputStream;
-    }
+    private final long size;
+    private final String fileName;
+    private final String contentType;
+    private final InputStream inputStream;
 }
