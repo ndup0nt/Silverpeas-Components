@@ -27,7 +27,6 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.mail.*;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -59,7 +58,7 @@ public class IMAPMailboxReader implements MailboxReader {
     /**
      * The registered listeners.
      */
-    private final List<MessageListener> listeners = new ArrayList<MessageListener>();
+    private final List<MailboxReadEventListener> listeners = new ArrayList<MailboxReadEventListener>();
     /**
      * The IMAP server address or host name.
      */
@@ -99,19 +98,19 @@ public class IMAPMailboxReader implements MailboxReader {
     }
 
     @Override
-    public void registerListener(MessageListener listener) {
+    public void registerListener(MailboxReadEventListener listener) {
         this.listeners.add(listener);
     }
 
     @Override
-    public void readMailbox() throws MessagingException, IOException {
+    public void readMailbox() throws MessagingException, MailboxEventHandlingException {
         if (listeners.size() == 0) {
             return;
         }
         doReadMailbox();
     }
 
-    private void doReadMailbox() throws MessagingException, IOException {
+    private void doReadMailbox() throws MessagingException, MailboxEventHandlingException {
         Store mailAccount = mailSession.getStore(IMAP_PROTOCOL);
         mailAccount.connect(imapServerAddress, imapServerPort, login, password);
 
@@ -126,7 +125,7 @@ public class IMAPMailboxReader implements MailboxReader {
         }
     }
 
-    private void handleMessages(Store mailAccount) throws MessagingException, IOException {
+    private void handleMessages(Store mailAccount) throws MessagingException, MailboxEventHandlingException {
         Folder inbox = mailAccount.getFolder(srcMessagesFolder);
         Folder handledFolder = mailAccount.getFolder(handledMessagesFolder);
 
@@ -148,12 +147,12 @@ public class IMAPMailboxReader implements MailboxReader {
         }
     }
 
-    private void handleMessagesInOpenedFolders(Folder inbox, Folder handledFolder) throws MessagingException, IOException {
+    private void handleMessagesInOpenedFolders(Folder inbox, Folder handledFolder) throws MailboxEventHandlingException, MessagingException {
         // Get the messages and process them
         Message[] msgs = inbox.getMessages();
 
-        for (MessageListener listener : listeners) {
-            listener.onMailboxRead(new ReadMailboxEvent(msgs));
+        for (MailboxReadEventListener listener : listeners) {
+            listener.onMailboxRead(new MailboxReadEvent(msgs));
         }
 
         // Mark the messages as handled by moving them to another folder

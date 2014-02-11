@@ -23,22 +23,13 @@ package org.silverpeas.component.kmelia.mailbox;
 import com.silverpeas.scheduler.*;
 import com.silverpeas.scheduler.trigger.JobTrigger;
 import com.silverpeas.scheduler.trigger.TimeUnit;
-import com.silverpeas.util.StringUtil;
 import com.stratelia.silverpeas.silvertrace.SilverTrace;
-import com.stratelia.webactiv.util.EJBUtilitaire;
-import com.stratelia.webactiv.util.JNDINames;
 import com.stratelia.webactiv.util.ResourceLocator;
-import com.stratelia.webactiv.util.node.control.NodeBm;
-import com.stratelia.webactiv.util.node.model.NodeDetail;
-import com.stratelia.webactiv.util.node.model.NodePK;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * A SchedulerEventListener that fires mailbox reading using MailboxReader.
@@ -53,7 +44,6 @@ public class MailboxReaderJob implements SchedulerEventListener {
 
     private final MailboxReader mailboxReader;
     private final int frequencyInMinutes;
-    private final SubscribedComponentListener subscribedComponentListener;
 
     /**
      * Constructor with all required arguments.
@@ -62,12 +52,9 @@ public class MailboxReaderJob implements SchedulerEventListener {
      * @param kmeliaSettings   kmelia settings
      */
     @Inject
-    private MailboxReaderJob(MailboxReader theMailboxReader, ResourceLocator kmeliaSettings,
-                             MessageProcessor theMessageProcessor,
-                             SubscribedComponentListener theSubscribedComponentListener) {
+    private MailboxReaderJob(MailboxReader theMailboxReader, ResourceLocator kmeliaSettings) {
         this.mailboxReader = theMailboxReader;
         this.frequencyInMinutes = kmeliaSettings.getInteger(FREQUENCY_PROP, DEFAULT_FREQUENCY);
-        this.subscribedComponentListener = theSubscribedComponentListener;
     }
 
     @Override
@@ -77,12 +64,14 @@ public class MailboxReaderJob implements SchedulerEventListener {
 
     @Override
     public void jobSucceeded(SchedulerEvent anEvent) {
-        SilverTrace.info("kmelia", this.getClass().getName(), "The job '" + anEvent.getJobExecutionContext().getJobName() + "' was successful");
+        SilverTrace.info("kmelia", this.getClass().getName(), "The job '" +
+                anEvent.getJobExecutionContext().getJobName() + "' was successful");
     }
 
     @Override
     public void jobFailed(SchedulerEvent anEvent) {
-        SilverTrace.error("kmelia", this.getClass().getName(), "The job '" + anEvent.getJobExecutionContext().getJobName() + "' was not successful", null, anEvent.getJobThrowable());
+        SilverTrace.error("kmelia", this.getClass().getName(), "The job '" +
+                anEvent.getJobExecutionContext().getJobName() + "' was not successful", null, anEvent.getJobThrowable());
     }
 
     /**
@@ -92,7 +81,6 @@ public class MailboxReaderJob implements SchedulerEventListener {
      */
     @PostConstruct
     private void registerJob() throws SchedulerException {
-        mailboxReader.registerListener(subscribedComponentListener);
         SchedulerFactory schedulerFactory = SchedulerFactory.getFactory();
         Scheduler scheduler = schedulerFactory.getScheduler();
         if (scheduler.isJobScheduled(JOB_NAME)) {

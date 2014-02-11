@@ -27,10 +27,10 @@ import javax.mail.Message;
 /**
  * Event thrown when a mailbox was read. The event should include the new messages that were read.
  */
-public class ReadMailboxEvent {
+public class MailboxReadEvent {
     private final Message[] messages;
 
-    public ReadMailboxEvent(Message[] someMessages) {
+    public MailboxReadEvent(Message[] someMessages) {
         Assert.notNull(someMessages);
         this.messages = someMessages.clone();
     }

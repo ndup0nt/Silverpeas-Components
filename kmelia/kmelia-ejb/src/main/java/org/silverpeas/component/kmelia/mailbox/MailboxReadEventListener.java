@@ -24,19 +24,16 @@
 
 package org.silverpeas.component.kmelia.mailbox;
 
-import javax.mail.MessagingException;
-import java.io.IOException;
-
 /**
- * Listener for a ReadMailboxEvent.
+ * Listener for a MailboxReadEvent.
  */
-public interface MessageListener {
+public interface MailboxReadEventListener {
     /**
      * Method called when a mailbox was read by a MailboxReader.
      *
-     * @param event the message event.
-     * @throws MessagingException if an error occured while reading the event messages
+     * @param event the triggered event
+     * @throws MailboxEventHandlingException if an error occurs while reading the event messages
      */
-    public void onMailboxRead(final ReadMailboxEvent event) throws MessagingException, IOException;
+    public void onMailboxRead(final MailboxReadEvent event) throws MailboxEventHandlingException;
 
 }

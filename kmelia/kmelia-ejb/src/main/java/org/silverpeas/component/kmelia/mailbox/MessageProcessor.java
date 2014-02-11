@@ -34,6 +34,9 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.ParseException;
 import java.io.IOException;
 
+/**
+ * Object that can extract body and attachments from an email Message.
+ */
 @Named
 @Singleton
 public class MessageProcessor {
@@ -90,14 +93,16 @@ public class MessageProcessor {
      * Process an email, extracting attachments and body to construct a MessageDocument.
      *
      * @param mail the email to be processed.
-     * @throws javax.mail.MessagingException
-     * @throws java.io.IOException
+     * @throws javax.mail.MessagingException if an error occurs while reading some mail information
+     * @throws java.io.IOException if an error occurs while reading the mail content
      */
     public MessageDocument processMessage(Message mail) throws MessagingException, IOException {
         String sender = ((InternetAddress[]) mail.getFrom())[0].getAddress();
         MessageDocument messageDocument = new MessageDocument(mail.getSubject(), sender, mail.getSentDate());
-        SilverTrace.info("kmelia", this.getClass().getName() + ".processMessage()",
-                "Processing message " + mail.getSubject());
+        if(SilverTrace.TRACE_LEVEL_DEBUG >= SilverTrace.getTraceLevel("kmelia", true)){
+            SilverTrace.debug("kmelia", this.getClass().getName() + ".processMessage()",
+                    "Processing message " + mail.getSubject());
+        }
         processMailPart(mail, messageDocument);
         return messageDocument;
     }

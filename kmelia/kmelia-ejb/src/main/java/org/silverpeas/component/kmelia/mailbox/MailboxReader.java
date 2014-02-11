@@ -22,22 +22,21 @@ package org.silverpeas.component.kmelia.mailbox;
 
 
 import javax.mail.MessagingException;
-import java.io.IOException;
 
 /**
  * Read messages in a mailbox and handle them with the registered listeners.
  */
 public interface MailboxReader {
     /**
-     * Register a new MessageListener.
+     * Register a new MailboxReadEventListener.
      */
-    void registerListener(MessageListener listener);
+    void registerListener(MailboxReadEventListener listener);
 
     /**
      * Read messages in a mailbox and handle them with the registered listeners.
      *
-     * @throws javax.mail.MessagingException if an error occured while communicating with the messaging system
-     * @throws java.io.IOException if an error occured while reading a message content
+     * @throws MessagingException            if an error occurs while communicating with the messaging system
+     * @throws MailboxEventHandlingException if an error occurs while some events are handled by a registered listener
      */
-    void readMailbox() throws MessagingException, IOException;
+    void readMailbox() throws MessagingException, MailboxEventHandlingException;
 }
