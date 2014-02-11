@@ -30,7 +30,7 @@ import java.io.InputStream;
  */
 @Getter
 @RequiredArgsConstructor
-public class Attachment {
+public class MessageAttachment {
 
     private final long size;
     private final String fileName;

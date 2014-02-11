@@ -34,7 +34,7 @@ import java.util.Set;
  */
 public class MessageDocument {
 
-    private final Set<Attachment> attachments = new HashSet<Attachment>();
+    private final Set<MessageAttachment> attachments = new HashSet<MessageAttachment>();
     @Getter
     private final String subject;
     @Getter
@@ -54,11 +54,11 @@ public class MessageDocument {
         this.sentDate = (Date) theSentDate.clone();
     }
 
-    public Set<Attachment> getAttachments() {
+    public Set<MessageAttachment> getAttachments() {
         return Collections.unmodifiableSet(attachments);
     }
 
-    public void addAttachment(Attachment anAttachment) {
+    public void addAttachment(MessageAttachment anAttachment) {
         this.attachments.add(anAttachment);
     }
 

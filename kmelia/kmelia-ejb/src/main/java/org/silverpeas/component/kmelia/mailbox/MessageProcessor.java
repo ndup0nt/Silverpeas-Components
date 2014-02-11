@@ -59,7 +59,7 @@ public class MessageProcessor {
             } else {
                 String fileName = getFileName(part);
                 if (fileName != null) {
-                    Attachment attachment = new Attachment(part.getSize(), fileName, extractContentType(part.getContentType()), part.getInputStream());
+                    MessageAttachment attachment = new MessageAttachment(part.getSize(), fileName, extractContentType(part.getContentType()), part.getInputStream());
                     messageDocument.addAttachment(attachment);
                 }
             }
