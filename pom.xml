@@ -8,11 +8,22 @@
   </parent>
 
   <scm>
-    <connection>scm:git:git@github.com:Silverpeas/Silverpeas-Components.git</connection>
-    <developerConnection>scm:git:git@github.com:Silverpeas/Silverpeas-Components.git</developerConnection>
-    <url>http://github.com/Silverpeas/Silverpeas-Components</url>
-    <tag>components-5.13</tag>
+    <connection>scm:git:git@github.com:ndup0nt/Silverpeas-Components.git</connection>
+    <developerConnection>scm:git:git@github.com:ndup0nt/Silverpeas-Components.git</developerConnection>
+    <url>http://github.com/ndup0nt/Silverpeas-Components</url>
+    <tag>components-aim-5.13</tag>
   </scm>
+
+  <distributionManagement>
+    <snapshotRepository>
+      <id>aim-snapshots</id>
+      <url>http://gva11srv3052/nexus/content/repositories/snapshots/</url>
+    </snapshotRepository>
+    <repository>
+      <id>aim-releases</id>
+      <url>http://gva11srv3052/nexus/content/repositories/releases/</url>
+    </repository>
+  </distributionManagement>
 
   <repositories>
     <repository>
