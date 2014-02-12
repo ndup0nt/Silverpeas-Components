@@ -20,6 +20,7 @@
  */
 package org.silverpeas.component.kmelia.mailbox;
 
+import com.silverpeas.util.StringUtil;
 import com.stratelia.silverpeas.silvertrace.SilverTrace;
 import org.springframework.util.Assert;
 
@@ -31,8 +32,10 @@ import javax.mail.Multipart;
 import javax.mail.Part;
 import javax.mail.internet.ContentType;
 import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeUtility;
 import javax.mail.internet.ParseException;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 
 /**
  * Object that can extract body and attachments from an email Message.
@@ -120,18 +123,23 @@ public class MessageProcessor {
 
     private String getFileName(Part part) throws MessagingException {
         String fileName = part.getFileName();
-        if (fileName != null) {
-            return fileName;
+        if (!StringUtil.isDefined(fileName)) {
+            try {
+                ContentType type = new ContentType(part.getContentType());
+                fileName = type.getParameter("name");
+            } catch (ParseException e) {
+                SilverTrace.warn("kmelia", this.getClass().getName(), "Unknown content type : " + part.getContentType()
+                        + ", therefore file name can't be resolved", null, e);
+            }
         }
-        final ContentType type;
-        try {
-            type = new ContentType(part.getContentType());
-        } catch (ParseException e) {
-            SilverTrace.warn("kmelia", this.getClass().getName(), "Unknown content type : " + part.getContentType()
-                    + ", therefore file name can't be resolved", null, e);
-            return null;
+        if (StringUtil.isDefined(fileName) && fileName.startsWith("=?") && fileName.endsWith("?=")) {
+            try {
+                fileName = MimeUtility.decodeText(fileName);
+            } catch (UnsupportedEncodingException e) {
+                SilverTrace.warn("kmelia", this.getClass().getName(), "Unable to convert file name "+fileName, null, e);
+            }
         }
-        return type.getParameter("name");
+        return fileName;
     }
 
     /**

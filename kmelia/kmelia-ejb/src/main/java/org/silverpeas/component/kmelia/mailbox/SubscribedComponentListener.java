@@ -9,13 +9,10 @@ import com.stratelia.webactiv.util.ResourceLocator;
 import com.stratelia.webactiv.util.node.control.NodeBm;
 import com.stratelia.webactiv.util.node.model.NodeDetail;
 import com.stratelia.webactiv.util.node.model.NodePK;
-import com.stratelia.webactiv.util.node.model.NodeRuntimeException;
-import com.stratelia.webactiv.util.publication.model.PublicationDetail;
-import com.stratelia.webactiv.util.publication.model.PublicationPK;
 import org.silverpeas.attachment.AttachmentServiceFactory;
-import org.silverpeas.attachment.model.SimpleAttachment;
-import org.silverpeas.attachment.model.SimpleDocument;
-import org.silverpeas.attachment.model.SimpleDocumentPK;
+import org.silverpeas.component.kmelia.mailbox.publication.AttachmentHolder;
+import org.silverpeas.component.kmelia.mailbox.publication.PublicationFromMessageDocumentBuilder;
+import org.silverpeas.component.kmelia.mailbox.publication.PublicationHolder;
 import org.silverpeas.wysiwyg.control.WysiwygController;
 
 import javax.annotation.PostConstruct;
@@ -35,15 +32,12 @@ import java.util.*;
 @Singleton
 public class SubscribedComponentListener implements MailboxReadEventListener {
     private static final String SUBSCRIBED_COMP_PROP = "kmelia.mailbox.job.subscribedComponentId";
-    private static final String DEFAULT_TARGET_FOLDER_PROP = "kmelia.mailbox.job.defaultTargetFolderId";
     private static final String ATTACHMENT_TYPES_FILTER_PROP = "kmelia.mailbox.job.attachmentTypesFilter";
     private static final int PUBLI_IMPORTANCE = 1;
     private static final String USER_ID = "0";
 
-    private final Map<String, NodeDetail> foldersByDescription = new HashMap<String, NodeDetail>();
     private final MessageProcessor messageProcessor;
     private final String subscribedComponentId;
-    private final String defaultTargetFolderId;
     private final MailboxReader mailboxReader;
     private final Set<String> attachmentTypesFilter;
 
@@ -52,7 +46,6 @@ public class SubscribedComponentListener implements MailboxReadEventListener {
                                         MessageProcessor theMessageProcessor, MailboxReader theMailboxReader) {
         this.messageProcessor = theMessageProcessor;
         this.subscribedComponentId = kmeliaSettings.getString(SUBSCRIBED_COMP_PROP);
-        this.defaultTargetFolderId = kmeliaSettings.getString(DEFAULT_TARGET_FOLDER_PROP);
         final String[] filterArray = kmeliaSettings.getString(ATTACHMENT_TYPES_FILTER_PROP).split(",");
         this.attachmentTypesFilter = new HashSet<String>(Arrays.asList(filterArray));
         this.mailboxReader = theMailboxReader;
@@ -60,15 +53,16 @@ public class SubscribedComponentListener implements MailboxReadEventListener {
 
     @Override
     public void onMailboxRead(MailboxReadEvent event) throws MailboxEventHandlingException {
-        if(event.getMessages().length > 0){
-            refreshFoldersMapping();
+        if(event.getMessages().length == 0){
+            return;
         }
+        Map<String, NodeDetail> foldersMapping = buildFoldersMapping();
         for (Message msg : event.getMessages()) {
-            handleMessage(msg);
+            handleMessage(msg, foldersMapping);
         }
     }
 
-    private void handleMessage(Message msg) throws MailboxEventHandlingException {
+    private void handleMessage(Message msg, Map<String, NodeDetail> foldersMapping) throws MailboxEventHandlingException {
         MessageDocument doc;
         try {
             doc = messageProcessor.processMessage(msg);
@@ -77,93 +71,86 @@ public class SubscribedComponentListener implements MailboxReadEventListener {
         } catch (IOException e) {
             throw new MailboxEventHandlingException(this.getClass().getName(), "An error occured while reading some message content",e);
         }
-        String pubId = storeMessageAsPublication(doc);
-        storeMessageAttachmentsAsPublicationAttachments(pubId, doc);
+        PublicationFromMessageDocumentBuilder builder = new PublicationFromMessageDocumentBuilder(attachmentTypesFilter, USER_ID, subscribedComponentId, doc);
+        String pubId = storeMessageAsPublication(doc, builder, foldersMapping);
+        storePublicationAttachments(pubId, builder);
     }
 
-    private void storeMessageAttachmentsAsPublicationAttachments(String pubId, MessageDocument doc) {
-        for (MessageAttachment att : doc.getAttachments()) {
-            if(SilverTrace.TRACE_LEVEL_DEBUG >= SilverTrace.getTraceLevel("kmelia", true)){
-                SilverTrace.debug("kmelia", this.getClass().getName(),
-                        "Handling attachment with name " + att.getFileName() + " and content type " + att.getContentType());
-            }
-            if(attachmentTypesFilter.contains(att.getContentType())){
-                storeMsgAttachmentAsPubAttachment(att, pubId);
-            }
+    private void storePublicationAttachments(String pubId, PublicationFromMessageDocumentBuilder builder) {
+        Collection<AttachmentHolder> attachments = builder.buildAttachments(pubId);
+        for (AttachmentHolder att : attachments) {
+            storePubAttachment(att);
         }
     }
 
-    private void storeMsgAttachmentAsPubAttachment(MessageAttachment att, String pubId) {
-        SimpleDocumentPK attachmentPk = new SimpleDocumentPK(null, subscribedComponentId);
-        SimpleDocument attachmentDocument = new SimpleDocument(attachmentPk, pubId, -1, false,
-                new SimpleAttachment(att.getFileName(), null, att.getFileName(), null, att.getSize(),
-                        att.getContentType(), USER_ID, new Date(), null));
-
-        AttachmentServiceFactory.getAttachmentService().createAttachment(attachmentDocument, att.getInputStream());
+    private void storePubAttachment(AttachmentHolder att) {
+        AttachmentServiceFactory.getAttachmentService().createAttachment(att.getSimpleDocument(), att.getInputStream());
     }
 
-    /**
-     * @param doc the message model
-     * @return the new publication id
-     */
-    private String storeMessageAsPublication(MessageDocument doc) throws MailboxEventHandlingException {
-        NodeDetail targetFolder = resolveTargetFolder(doc);
+    private String storeMessageAsPublication(MessageDocument doc, PublicationFromMessageDocumentBuilder builder, Map<String, NodeDetail> foldersMapping) throws MailboxEventHandlingException {
+        NodeDetail targetFolder = resolveTargetFolder(doc, foldersMapping);
         assert targetFolder != null;
-        if(SilverTrace.TRACE_LEVEL_DEBUG >= SilverTrace.getTraceLevel("kmelia", true)){
-            SilverTrace.debug("kmelia", this.getClass().getName(),
-                    "Message  " + doc.getSubject() + " will go into folder " + targetFolder.getName());
-        }
-        Date creationDate = new Date();
-        PublicationDetail publication = new PublicationDetail(
-                new PublicationPK("dummy", subscribedComponentId), doc.getSubject(), null, creationDate,
-                creationDate, null, USER_ID, PUBLI_IMPORTANCE, null, null, null, PublicationDetail.VALID);
-        String pubId = getKmeliaBm().createPublicationIntoTopic(publication, targetFolder.getNodePK());
-        WysiwygController.save(doc.getBody(), subscribedComponentId, pubId, USER_ID, null, true);
+        logTargetFolder(doc, targetFolder);
+        PublicationHolder publicationHolder = builder.buildPublication(PUBLI_IMPORTANCE);
+        String pubId = getKmeliaBm().createPublicationIntoTopic(publicationHolder.getPublicationDetail(), targetFolder.getNodePK());
+        WysiwygController.save(publicationHolder.getWysiwygContent(), subscribedComponentId, pubId, USER_ID, null, true);
         return pubId;
     }
 
-    private NodeDetail resolveTargetFolder(MessageDocument doc) {
+    private void logTargetFolder(MessageDocument doc, NodeDetail targetFolder){
+        if(SilverTrace.TRACE_LEVEL_DEBUG >= SilverTrace.getTraceLevel("kmelia", true)){
+            SilverTrace.debug("kmelia", this.getClass().getName(),
+                    "Message " + doc.getSubject() + " will go into folder " + targetFolder.getName());
+        }
+    }
+
+    private NodeDetail resolveTargetFolder(MessageDocument doc, Map<String, NodeDetail> foldersMapping) throws MailboxEventHandlingException {
         NodeDetail res = null;
+
         if (doc.getSender() != null) {
             int indexOfArrob = doc.getSender().indexOf('@');
             if (indexOfArrob != -1 && indexOfArrob < doc.getSender().length() - 1) {
                 String domainName = doc.getSender().substring(indexOfArrob + 1);
-                res = resolveFolderFromDomain(domainName);
+                res = foldersMapping.get(domainName);
             }
         }
         if(res == null){
-            return getNodeBm().getDetail(new NodePK(defaultTargetFolderId, subscribedComponentId));
+            return getDefaultTargetFolder(foldersMapping);
         }
         return res;
     }
 
-    private NodeDetail getDefaultTargetFolder() throws MailboxEventHandlingException {
-        try{
-            return getNodeBm().getDetail(new NodePK(defaultTargetFolderId, subscribedComponentId));
-        } catch (NodeRuntimeException ex){
+    private NodeDetail getDefaultTargetFolder(Map<String, NodeDetail> foldersMapping) throws MailboxEventHandlingException {
+        NodeDetail defaultTargetFolder = foldersMapping.get(null);
+        if(defaultTargetFolder == null){
             throw new MailboxEventHandlingException(this.getClass().getName(), "Could not find default folder. " +
-                    "Check that " + DEFAULT_TARGET_FOLDER_PROP + " is well set up", ex);
+                    "Check that there is at least one folder with an empty description");
         }
+        return defaultTargetFolder;
     }
 
-    private NodeDetail resolveFolderFromDomain(String domainName) {
-        return foldersByDescription.get(domainName);
+    private Map<String, NodeDetail> buildFoldersMapping() {
+        HashMap<String, NodeDetail> foldersByDescription = new HashMap<String, NodeDetail>();
+        foldersByDescription.clear();
+        ArrayList<NodeDetail> subTree = getNodeBm().getSubTree(new NodePK(NodePK.ROOT_NODE_ID, subscribedComponentId));
+        for (NodeDetail node : subTree) {
+            if(StringUtil.isBlank(node.getDescription())){
+                NodeDetail defaultFolder = foldersByDescription.get(null);
+                //the first folder with an empty description will be the default folder
+                if(defaultFolder == null){
+                    foldersByDescription.put(null, node);
+                }
+            } else {
+                foldersByDescription.put(node.getDescription(), node);
+            }
+        }
+        return foldersByDescription;
     }
 
     @PostConstruct
     private void registerThis() {
         // this listener registers itself as a listener for mailbox read events
         mailboxReader.registerListener(this);
-    }
-
-    private void refreshFoldersMapping() {
-        foldersByDescription.clear();
-        ArrayList<NodeDetail> subTree = getNodeBm().getSubTree(new NodePK(NodePK.ROOT_NODE_ID, subscribedComponentId));
-        for (NodeDetail node : subTree) {
-            if (StringUtil.isNotBlank(node.getDescription())) {
-                foldersByDescription.put(node.getDescription(), node);
-            }
-        }
     }
 
     private static class SingletonsHolder{

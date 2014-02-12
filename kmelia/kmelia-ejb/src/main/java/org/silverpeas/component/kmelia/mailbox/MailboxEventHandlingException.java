@@ -8,6 +8,10 @@ import com.stratelia.webactiv.util.exception.SilverpeasException;
  */
 public class MailboxEventHandlingException extends SilverpeasException {
 
+    public MailboxEventHandlingException(String callingClass, String message) {
+        super(callingClass, SilverTrace.TRACE_LEVEL_ERROR, message);
+    }
+
     public MailboxEventHandlingException(String callingClass, String message, Exception cause) {
         super(callingClass, SilverTrace.TRACE_LEVEL_ERROR, message, null, cause);
     }
