@@ -42,7 +42,7 @@
 
   <groupId>com.silverpeas</groupId>
   <artifactId>components</artifactId>
-  <version>aim-5.13-4-SNAPSHOT</version>
+  <version>aim-5.13.4-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Silverpeas Components</name>
 
