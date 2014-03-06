@@ -44,6 +44,8 @@ import java.io.UnsupportedEncodingException;
 @Singleton
 public class MessageProcessor {
 
+    private static final String TEXT_MIME_TYPE_WILDCARD = "text/*";
+
     /**
      * Process a part.
      *
@@ -65,7 +67,7 @@ public class MessageProcessor {
             } else {
                 String fileName = getFileName(part);
                 if (fileName != null) {
-                    MessageAttachment attachment = new MessageAttachment(part.getSize(), fileName, extractContentType(part.getContentType()), part.getInputStream());
+                    MessageAttachment attachment = new MessageAttachment(part.getSize(), fileName, extractBaseContentType(part.getContentType()), part.getInputStream());
                     messageDocument.addAttachment(attachment);
                 }
             }
@@ -86,8 +88,8 @@ public class MessageProcessor {
         if (messageDocument.getBody() != null) {
             return;
         }
-        Assert.state(part.isMimeType("text/*"));
-        String contentType = extractContentType(part.getContentType());
+        Assert.state(part.isMimeType(TEXT_MIME_TYPE_WILDCARD));
+        String contentType = extractBaseContentType(part.getContentType());
         messageDocument.setBodyContentType(contentType);
         messageDocument.setBody((String) part.getContent());
     }
@@ -110,12 +112,12 @@ public class MessageProcessor {
         return messageDocument;
     }
 
-    private static String extractContentType(String contentType) {
+    private static String extractBaseContentType(String contentType) {
         try {
             ContentType type = new ContentType(contentType);
             return type.getBaseType();
         } catch (ParseException e) {
-            SilverTrace.warn("kmelia", MessageProcessor.class.getName() + ".extractContentType()",
+            SilverTrace.warn("kmelia", MessageProcessor.class.getName() + ".extractBaseContentType()",
                     "Could not extract base type for " + contentType, e);
             return contentType;
         }
@@ -156,10 +158,10 @@ public class MessageProcessor {
         }
 
         if (Part.INLINE.equals(disposition)) {
-            return part.isMimeType("text/*") && getFileName(part) == null;
+            return part.isMimeType(TEXT_MIME_TYPE_WILDCARD) && getFileName(part) == null;
         }
 
-        return part.isMimeType("text/*");
+        return part.isMimeType(TEXT_MIME_TYPE_WILDCARD);
     }
 
     private void processMultipart(Multipart multipart, MessageDocument messageDocument)

@@ -1,6 +1,7 @@
 package org.silverpeas.component.kmelia.mailbox.publication;
 
 import com.silverpeas.util.EncodeHelper;
+import com.silverpeas.util.FileUtil;
 import com.stratelia.silverpeas.silvertrace.SilverTrace;
 import com.stratelia.webactiv.util.publication.model.PublicationDetail;
 import com.stratelia.webactiv.util.publication.model.PublicationPK;
@@ -11,6 +12,9 @@ import org.silverpeas.attachment.model.SimpleDocumentPK;
 import org.silverpeas.component.kmelia.mailbox.MessageAttachment;
 import org.silverpeas.component.kmelia.mailbox.MessageDocument;
 
+import javax.activation.MimetypesFileTypeMap;
+import java.io.File;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -26,6 +30,8 @@ public class PublicationFromMessageDocumentBuilder {
     private final String userId;
     private final String componentId;
     private final MessageDocument messageDocument;
+
+    private static final String RAW_MIME_TYPE = "application/octet-stream";
 
     /**
      * Prepare a PublicationDetail and its WYSIWYG content ready to be saved in the kmelia component in Silverpeas.
@@ -52,18 +58,35 @@ public class PublicationFromMessageDocumentBuilder {
                 SilverTrace.debug("kmelia", this.getClass().getName(),
                         "Handling attachment with name " + att.getFileName() + " and content type " + att.getContentType());
             }
-            if (attachmentTypesFilter.contains(att.getContentType())) {
-                res.add(buildAttachment(att, publicationId));
+            final String contentType = resolveContentType(att);
+            if (attachmentTypesFilter.contains(contentType)) {
+                res.add(buildAttachment(att, publicationId, contentType));
             }
         }
         return res;
     }
 
-    private AttachmentHolder buildAttachment(MessageAttachment att, String pubId) {
+    private String resolveContentType(MessageAttachment att){
+        if(RAW_MIME_TYPE.equals(att.getContentType())){
+            return guessContentTypeFromName(att);
+        }
+        return att.getContentType();
+    }
+
+    private String guessContentTypeFromName(MessageAttachment att){
+        final String res = FileUtil.getMimeType(att.getFileName());
+        if(res == null){
+            return att.getContentType();
+        }
+        return res;
+    }
+
+
+    private AttachmentHolder buildAttachment(MessageAttachment att, String pubId, String contentType) {
         SimpleDocumentPK attachmentPk = new SimpleDocumentPK(null, componentId);
         SimpleDocument attachmentDocument = new SimpleDocument(attachmentPk, pubId, -1, false,
                 new SimpleAttachment(att.getFileName(), null, att.getFileName(), null, att.getSize(),
-                        att.getContentType(), userId, new Date(), null));
+                        contentType, userId, new Date(), null));
         return new AttachmentHolder(attachmentDocument, att.getInputStream());
     }
 
