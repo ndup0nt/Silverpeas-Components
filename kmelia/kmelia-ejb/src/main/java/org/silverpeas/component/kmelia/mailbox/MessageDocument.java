@@ -38,7 +38,9 @@ public class MessageDocument {
     @Getter
     private final String subject;
     @Getter
-    private final String sender;
+    private final String fromAddress;
+    @Getter
+    private final String fromPersonal;
     private final Date sentDate;
     @Getter
     @Setter
@@ -47,9 +49,10 @@ public class MessageDocument {
     @Setter
     private String bodyContentType;
 
-    public MessageDocument(String theSubject, String theSender, Date theSentDate) {
+    public MessageDocument(String theSubject, String theSenderAddress, String theSenderPersonal, Date theSentDate) {
         this.subject = theSubject;
-        this.sender = theSender;
+        this.fromAddress = theSenderAddress;
+        this.fromPersonal = theSenderPersonal;
         AssertArgument.assertNotNull(theSentDate, "sentDate is mandatory");
         this.sentDate = (Date) theSentDate.clone();
     }

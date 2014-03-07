@@ -107,10 +107,10 @@ public class SubscribedComponentListener implements MailboxReadEventListener {
     private NodeDetail resolveTargetFolder(MessageDocument doc, Map<String, NodeDetail> foldersMapping) throws MailboxEventHandlingException {
         NodeDetail res = null;
 
-        if (doc.getSender() != null) {
-            int indexOfArrob = doc.getSender().indexOf('@');
-            if (indexOfArrob != -1 && indexOfArrob < doc.getSender().length() - 1) {
-                String domainName = doc.getSender().substring(indexOfArrob + 1);
+        if (doc.getFromAddress() != null) {
+            int indexOfArrob = doc.getFromAddress().indexOf('@');
+            if (indexOfArrob != -1 && indexOfArrob < doc.getFromAddress().length() - 1) {
+                String domainName = doc.getFromAddress().substring(indexOfArrob + 1);
                 res = foldersMapping.get(domainName);
             }
         }

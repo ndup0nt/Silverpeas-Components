@@ -108,10 +108,22 @@ public class PublicationFromMessageDocumentBuilder {
     }
 
     private String resolveWysiwygContentFromMessage() {
+        String body = appendSenderToBody();
         if ("text/plain".equals(messageDocument.getBodyContentType())) {
-            return EncodeHelper.javaStringToHtmlParagraphe(messageDocument.getBody());
+            return EncodeHelper.javaStringToHtmlParagraphe(body);
         }
-        return messageDocument.getBody();
+        return body;
+    }
+
+    private String appendSenderToBody(){
+        StringBuilder res = new StringBuilder(messageDocument.getBody());
+        res.append("<br/>");
+        res.append("<br/>");
+        res.append("--");
+        res.append("<br/>");
+        res.append("Message expédié par "+messageDocument.getFromPersonal());
+        res.append(" (" + messageDocument.getFromAddress() + ")");
+        return res.toString();
     }
 
 }

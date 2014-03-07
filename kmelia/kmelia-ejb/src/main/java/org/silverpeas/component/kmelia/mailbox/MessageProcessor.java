@@ -102,8 +102,9 @@ public class MessageProcessor {
      * @throws java.io.IOException if an error occurs while reading the mail content
      */
     public MessageDocument processMessage(Message mail) throws MessagingException, IOException {
-        String sender = ((InternetAddress[]) mail.getFrom())[0].getAddress();
-        MessageDocument messageDocument = new MessageDocument(mail.getSubject(), sender, mail.getSentDate());
+        InternetAddress firstAddress = ((InternetAddress[]) mail.getFrom())[0];
+        MessageDocument messageDocument = new MessageDocument(mail.getSubject(), firstAddress.getAddress(),
+                firstAddress.getPersonal(), mail.getSentDate());
         if(SilverTrace.TRACE_LEVEL_DEBUG >= SilverTrace.getTraceLevel("kmelia", true)){
             SilverTrace.debug("kmelia", this.getClass().getName() + ".processMessage()",
                     "Processing message " + mail.getSubject());
